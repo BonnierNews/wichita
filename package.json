@@ -1,0 +1,41 @@
+{
+  "name": "@bonniernews/wichita",
+  "version": "0.0.1",
+  "description": "Run your es6 modules with imports in a vm sandbox",
+  "main": "index.js",
+  "license": "MIT",
+  "author": {
+    "name": "Bonnier News",
+    "url": "https://github.com/BonnierNews"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/BonnierNews/wichita"
+  },
+  "bugs": {
+    "url": "https://github.com/BonnierNews/wichita/issues"
+  },
+  "files": [
+    "index.js",
+    "LICENSE",
+    "README.md"
+  ],
+  "keywords": [
+    "vm",
+    "SourceTextModule",
+    "sandbox",
+    "es6",
+    "tallahassee"
+  ],
+  "scripts": {
+    "test": "NODE_OPTIONS=\"--experimental-vm-modules --no-warnings\" mocha && eslint . --cache"
+  },
+  "engines": {
+    "node": ">=10.15"
+  },
+  "devDependencies": {
+    "eslint": "^5.12.0",
+    "mocha": "^5.2.0",
+    "smqp": "^1.2.2"
+  }
+}

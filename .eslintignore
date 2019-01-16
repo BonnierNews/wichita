@@ -1,0 +1,7 @@
+public/
+coverage/
+assets/js/vendor/**
+submodule/**
+logs/
+docs/
+/worker.js
