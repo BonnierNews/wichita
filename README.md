@@ -1,6 +1,8 @@
 Wichita - Tallahassee sidekick
 ==============================
 
+[![Build Status](https://travis-ci.org/BonnierNews/wichita.svg?branch=master)](https://travis-ci.org/BonnierNews/wichita)
+
 Run your es6 modules in a sandbox with the experimental `vm.SourceTextModule`.
 
 The following node options are required to run this module
