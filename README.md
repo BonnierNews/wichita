@@ -13,6 +13,27 @@ If running tests with mocha you can preceed the mocha call with `NODE_OPTIONS`, 
 NODE_OPTIONS="--experimental-vm-modules --no-warnings" mocha -R dot
 ```
 
+### Api
+
+Wichita takes one required argument:
+- `sourcePath`: relative path from calling file
+
+and returns an api:
+
+- `path`: absolute path to file
+- `caller`: absolute path to calling file
+- `run(globalContext)`: run function
+  - `globalContext`: required object that will be converted into a sandbox
+
+```js
+const source = Script("./resources/main");
+source.run({
+  setTimeout() {},
+  console,
+  window: {},
+})
+```
+
 ### Example
 
 ```js

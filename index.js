@@ -9,10 +9,12 @@ module.exports = function Scripts(sourcePath) {
   if (!("SourceTextModule" in vm)) return;
 
   const calledFrom = getCallerFile();
+  const fullPath = getFullPath(sourcePath, calledFrom);
 
   return {
+    path: fullPath,
+    calledFrom,
     run(browser) {
-      const fullPath = getFullPath(sourcePath, calledFrom);
       return runScripts(browser, fullPath);
     },
   };
