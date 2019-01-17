@@ -6,7 +6,7 @@ const {name, version} = require("./package.json");
 const {dirname, extname, join, resolve: resolvePath} = require("path");
 
 module.exports = function Scripts(sourcePath) {
-  if (!("SourceTextModule" in vm)) return;
+  if (!("SourceTextModule" in vm)) throw new Error("No SourceTextModule in vm, try using node --experimental-vm-modules flag");
 
   const calledFrom = getCallerFile();
   const fullPath = getFullPath(sourcePath, calledFrom);

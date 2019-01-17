@@ -1,7 +1,7 @@
 "use strict";
 
-const Script = require("..");
 const assert = require("assert");
+const Script = require("..");
 const {join} = require("path");
 
 describe("script", () => {
@@ -75,7 +75,7 @@ describe("script", () => {
   });
 
   it("throws if import file is not found", async () => {
-    const source = Script("../resources/broken-main");
+    const source = Script("../resources/broken-import");
 
     const context = {
       window: {
@@ -113,7 +113,7 @@ describe("script", () => {
   });
 
   it("rejects if import file is not found", () => {
-    const source = Script("../resources/broken-main");
+    const source = Script("../resources/broken-import");
 
     const context = {
       window: {
@@ -126,5 +126,22 @@ describe("script", () => {
       code: "ENOENT",
       path: join(__dirname, "../resources/lib/no-module.js")
     });
+  });
+
+  it("throws if script error", async () => {
+    const source = Script("../resources/script-error.js");
+
+    const context = {
+      window: {}
+    };
+
+    try {
+      await source.run(context);
+    } catch (e) {
+      var error = e; //eslint-disable-line no-var
+    }
+
+    assert.ok(error);
+    assert.ok(/myProp/.test(error.message));
   });
 });
