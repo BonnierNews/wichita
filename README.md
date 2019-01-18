@@ -24,13 +24,30 @@ and returns an api:
 - `caller`: absolute path to calling file
 - `run(globalContext)`: run function
   - `globalContext`: required object that will be converted into a sandbox
+- `execute(globalContext, callback)`: execute module function
+  - `globalContext`: required object that will be converted into a sandbox
+  - `callback`: function that returns module as argument, `callback(es6module)`
 
+Run script:
 ```js
 const source = Script("./resources/main");
 source.run({
   setTimeout() {},
   console,
   window: {},
+})
+```
+
+Execute module:
+```js
+const source = Script("./resources/lib/module");
+source.execute({
+  setTimeout() {},
+  console,
+  window: {},
+}, (module) => {
+  module.default(1);
+  module.justReturn(2);
 })
 ```
 
@@ -73,6 +90,26 @@ describe("script", () => {
     assert.ok(context.window.setByModule);
     assert.equal(context.window.count, 2);
     assert.ok(context.window.setByQueue);
+  });
+
+  it("executes module function", async () => {
+    const source = Script("./resources/lib/module");
+
+    const context = {
+      window: {
+        root: true,
+      },
+      console,
+    };
+
+    let called;
+
+    await source.execute(context, (module) => {
+      called = true;
+      assert.equal(module.justReturn(1), 1);
+    });
+
+    assert.ok(called);
   });
 });
 ```

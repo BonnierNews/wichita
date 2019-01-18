@@ -12,9 +12,11 @@ describe("script", () => {
       path: join(__dirname, "../resources/main.js"),
       calledFrom: __filename,
       run: source.run,
+      execute: source.execute,
     });
 
     assert.ok(typeof source.run === "function", "run function");
+    assert.ok(typeof source.execute === "function", "execute function");
   });
 
   it("executes scripts in passed context", async () => {

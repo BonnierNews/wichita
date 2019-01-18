@@ -3,9 +3,9 @@
 const fs = require("fs");
 const vm = require("vm");
 const {name, version} = require("./package.json");
-const {dirname, extname, join, resolve: resolvePath} = require("path");
+const {dirname, extname, join, resolve: resolvePath, isAbsolute} = require("path");
 
-module.exports = function Scripts(sourcePath) {
+module.exports = function Scripts(sourcePath, options) {
   if (!("SourceTextModule" in vm)) throw new Error("No SourceTextModule in vm, try using node --experimental-vm-modules flag");
 
   const calledFrom = getCallerFile();
@@ -14,13 +14,24 @@ module.exports = function Scripts(sourcePath) {
   return {
     path: fullPath,
     calledFrom,
-    run(browser) {
-      return runScripts(browser, fullPath);
+    run(globalContext) {
+      return runScripts(globalContext, fullPath, options);
+    },
+    execute(globalContext, testFn) {
+      return runScripts(globalContext, fullPath, {...options, initializeImportMeta}, `
+import * as Module from "${fullPath}";
+import.meta.export(Module)
+      `);
+
+      function initializeImportMeta(meta) {
+        meta.export = testFn;
+      }
     },
   };
 };
 
 function getFullPath(sourcePath, calledFrom) {
+  if (isAbsolute(sourcePath)) return sourcePath;
   const isRelativePath = /^\.{1,2}[/\\]?/.test(sourcePath);
   const resolvedPath = !isRelativePath && getModulePath(sourcePath);
   if (resolvedPath) {
@@ -49,19 +60,38 @@ function getModulePath(sourcePath) {
   }
 }
 
-async function runScripts(globalContext, mainPath, options = {}) {
+async function runScripts(globalContext, mainPath, options = {}, testScript) {
   const cache = {};
+  const {initializeImportMeta} = options;
 
   const vmContext = vm.createContext(globalContext, {
     name: `${name} v${version}`,
-    ...options
+    ...options,
   });
 
-  const main = await loadScript(mainPath, vmContext);
+  let mainModule;
+  if (testScript) {
+    mainModule = new vm.SourceTextModule(testScript, {
+      url: `file://${mainPath}`,
+      context: vmContext,
+      initializeImportMeta,
+    });
 
-  await main.instantiate();
+    await mainModule.link(linker);
 
-  return main.evaluate();
+  } else {
+    mainModule = await loadScript(mainPath, vmContext);
+  }
+
+  await mainModule.instantiate();
+
+  return mainModule.evaluate().then((result) => {
+    return {
+      ...result,
+      module: mainModule,
+      context: vmContext,
+    };
+  });
 
   async function loadScript(scriptPath, context) {
     const scriptSource = await readScript(scriptPath);
@@ -69,6 +99,7 @@ async function runScripts(globalContext, mainPath, options = {}) {
     const module = new vm.SourceTextModule(scriptSource, {
       url: `file://${scriptPath}`,
       context,
+      initializeImportMeta
     });
 
     await module.link(linker);
@@ -79,6 +110,7 @@ async function runScripts(globalContext, mainPath, options = {}) {
   async function linker(specifier, referencingModule) {
     const parentFile = referencingModule.url.substring(7);
     const scriptPath = getFullPath(specifier, parentFile);
+
 
     if (cache[scriptPath]) {
       return cache[scriptPath];
