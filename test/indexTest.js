@@ -58,6 +58,18 @@ describe("script", () => {
     assert.ok(context.window.setByQueue);
   });
 
+  it("picks up extension from main file when importing linked file", async () => {
+    const source = Script("../resources/assets/main.mjs");
+
+    const context = {
+      window: {},
+    };
+
+    await source.run(context);
+
+    assert.ok(context.window.gotten);
+  });
+
   it("throws if main file is not found", async () => {
     const source = Script("../resources/no-main");
 
