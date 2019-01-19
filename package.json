@@ -31,14 +31,23 @@
     "tallahassee"
   ],
   "scripts": {
-    "test": "NODE_OPTIONS=\"--experimental-vm-modules --no-warnings\" mocha && eslint . --cache"
+    "test": "NODE_OPTIONS=\"--experimental-vm-modules --no-warnings\" mocha && eslint . --cache",
+    "test:cov": "NODE_OPTIONS=\"--experimental-vm-modules --no-warnings\" nyc mocha && eslint . --cache && nyc report --reporter=lcov"
   },
   "engines": {
     "node": ">=10.15"
   },
   "devDependencies": {
+    "coveralls": "^3.0.2",
     "eslint": "^5.12.1",
     "mocha": "^5.2.0",
+    "nyc": "^13.1.0",
     "smqp": "^1.2.2"
+  },
+  "nyc": {
+    "exclude": [
+      "resources",
+      "test"
+    ]
   }
 }
