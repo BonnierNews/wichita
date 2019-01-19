@@ -16,16 +16,16 @@ module.exports = function Scripts(sourcePath, options) {
   return {
     path: fullPath,
     calledFrom,
-    run(globalContext) {
-      return runScripts(globalContext, fullPath, options);
+    run(sandbox) {
+      return runScripts(sandbox, fullPath, options);
     },
-    exports(globalContext) {
+    exports(sandbox) {
       return new Promise((resolve, reject) => {
-        this.execute(globalContext, resolve).catch(reject);
+        this.execute(sandbox, resolve).catch(reject);
       });
     },
-    execute(globalContext, fn) {
-      return runScripts(globalContext, fullPath, {...options, initializeImportMeta}, `
+    execute(sandbox, fn) {
+      return runScripts(sandbox, fullPath, {...options, initializeImportMeta}, `
 import * as _module from "${fullPath}";
 import.meta.export(_module)
       `);
@@ -67,11 +67,11 @@ function getModulePath(sourcePath) {
   }
 }
 
-async function runScripts(globalContext, mainPath, options = {}, script) {
+async function runScripts(sandbox, mainPath, options = {}, script) {
   const cache = {};
   const {initializeImportMeta} = options;
 
-  const vmContext = vm.createContext(globalContext, {
+  const vmContext = vm.createContext(sandbox, {
     name: `${name} v${version}`,
     ...options,
   });

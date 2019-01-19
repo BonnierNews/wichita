@@ -2,6 +2,7 @@
 
 const assert = require("assert");
 const Script = require("..");
+const vm = require("vm");
 const {join} = require("path");
 
 describe("script", () => {
@@ -56,6 +57,21 @@ describe("script", () => {
     assert.ok(context.window.setByModule);
     assert.equal(context.window.count, 42);
     assert.ok(context.window.setByQueue);
+  });
+
+  it("options are passed to vm.createContext", async () => {
+    const source = Script("../resources/main", {
+      name: "Tallahassee",
+      origin: "https://www.expressen.se"
+    });
+
+    const context = {
+      window: {},
+      console,
+    };
+
+    const result = await source.run(context);
+    assert.ok(vm.isContext(result.context));
   });
 
   it("picks up extension from main file when importing linked file", async () => {

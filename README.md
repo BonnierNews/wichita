@@ -23,12 +23,12 @@ and returns an api:
 
 - `path`: absolute path to file
 - `caller`: absolute path to calling file
-- `run(globalContext)`: run es6 module
-  - `globalContext`: required object that will be converted into a sandbox and used as global context
-- `exports(globalContext)`: expose module export functions
-  - `globalContext`: required global context object
-- `execute(globalContext, fn)`: execute module function
-  - `globalContext`: required global context object
+- `run(sandbox)`: run es6 module
+  - `sandbox`: required object that will be contextified and used as global context
+- `exports(sandbox)`: expose module export functions
+  - `sandbox`: required object
+- `execute(sandbox, fn)`: execute function
+  - `sandbox`: required object
   - `fn`: function that returns module as argument, `fn(es6module)`
 
 Run script:

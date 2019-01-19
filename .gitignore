@@ -11,6 +11,8 @@ npm-debug.log
 .idea
 *.iml
 .vscode
+.nyc_output
+coverage
 
 # Cache
 .eslintcache
