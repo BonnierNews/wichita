@@ -20,8 +20,8 @@ module.exports = function Scripts(sourcePath, options) {
       return runScripts(globalContext, fullPath, options);
     },
     exports(globalContext) {
-      return new Promise((resolve) => {
-        this.execute(globalContext, resolve);
+      return new Promise((resolve, reject) => {
+        this.execute(globalContext, resolve).catch(reject);
       });
     },
     execute(globalContext, fn) {
@@ -116,7 +116,6 @@ async function runScripts(globalContext, mainPath, options = {}, script) {
   async function linker(specifier, referencingModule) {
     const parentFile = referencingModule.url.substring(7);
     const scriptPath = getFullPath(specifier, parentFile);
-
 
     if (cache[scriptPath]) {
       return cache[scriptPath];

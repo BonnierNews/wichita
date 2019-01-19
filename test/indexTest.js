@@ -78,6 +78,25 @@ describe("script", () => {
     assert.equal(error.code, "ENOENT");
   });
 
+  it("throws if trying to run a folder", async () => {
+    const source = Script("../resources");
+
+    const context = {
+      window: {
+        root: true,
+      },
+    };
+
+    try {
+      await source.run(context);
+    } catch (e) {
+      var error = e; //eslint-disable-line no-var
+    }
+
+    assert.ok(error);
+    assert.equal(error.code, "ENOENT");
+  });
+
   it("throws if import file is not found", async () => {
     const source = Script("../resources/broken-import");
 

@@ -1,6 +1,6 @@
 {
   "name": "@bonniernews/wichita",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Run your es6 modules with imports/exports in a vm sandbox",
   "main": "index.js",
   "license": "MIT",
