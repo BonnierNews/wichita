@@ -16,15 +16,16 @@ NODE_OPTIONS="--experimental-vm-modules --no-warnings" mocha -R dot
 ### Api
 
 Wichita takes one required argument:
-- `sourcePath`: relative path from calling file
+- `sourcePath`: required script path, relative from calling file
+- `options`: optional vm context options, passed to `vm.createContext`
 
 and returns an api:
 
 - `path`: absolute path to file
 - `caller`: absolute path to calling file
-- `run(globalContext)`: run function
+- `run(globalContext)`: run es6 module
   - `globalContext`: required object that will be converted into a sandbox and used as global context
-- `exports(globalContext)`: execute module function
+- `exports(globalContext)`: expose module export functions
   - `globalContext`: required global context object
 - `execute(globalContext, fn)`: execute module function
   - `globalContext`: required global context object
