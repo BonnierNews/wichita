@@ -1,7 +1,7 @@
 {
   "name": "@bonniernews/wichita",
-  "version": "0.2.0",
-  "description": "Run your es6 modules with imports in a vm sandbox",
+  "version": "0.3.0",
+  "description": "Run your es6 modules with imports/exports in a vm sandbox",
   "main": "index.js",
   "license": "MIT",
   "author": {
@@ -21,10 +21,13 @@
     "README.md"
   ],
   "keywords": [
-    "vm",
     "SourceTextModule",
-    "sandbox",
     "es6",
+    "vm",
+    "sandbox",
+    "module",
+    "exports",
+    "zero transpiling",
     "tallahassee"
   ],
   "scripts": {
@@ -34,7 +37,7 @@
     "node": ">=10.15"
   },
   "devDependencies": {
-    "eslint": "^5.12.0",
+    "eslint": "^5.12.1",
     "mocha": "^5.2.0",
     "smqp": "^1.2.2"
   }

@@ -23,25 +23,40 @@ and returns an api:
 - `path`: absolute path to file
 - `caller`: absolute path to calling file
 - `run(globalContext)`: run function
-  - `globalContext`: required object that will be converted into a sandbox
-- `execute(globalContext, callback)`: execute module function
-  - `globalContext`: required object that will be converted into a sandbox
-  - `callback`: function that returns module as argument, `callback(es6module)`
+  - `globalContext`: required object that will be converted into a sandbox and used as global context
+- `exports(globalContext)`: execute module function
+  - `globalContext`: required global context object
+- `execute(globalContext, fn)`: execute module function
+  - `globalContext`: required global context object
+  - `fn`: function that returns module as argument, `fn(es6module)`
 
 Run script:
 ```js
 const source = Script("./resources/main");
-source.run({
+await source.run({
   setTimeout() {},
   console,
   window: {},
 })
 ```
 
-Execute module:
+Exports:
 ```js
 const source = Script("./resources/lib/module");
-source.execute({
+const {default: defaultExport, justReturn} = await source.exports({
+  setTimeout() {},
+  console,
+  window: {},
+}
+
+defaultExport(1);
+justReturn(2);
+```
+
+Execute:
+```js
+const source = Script("./resources/lib/module");
+await source.execute({
   setTimeout() {},
   console,
   window: {},
@@ -72,7 +87,7 @@ describe("script", () => {
 
     assert.ok(context.window.broker);
     assert.ok(context.window.setByModule);
-    assert.equal(context.window.count, 2);
+    assert.equal(context.window.count, 1);
     assert.ok(context.window.setByQueue);
   });
 
@@ -82,17 +97,33 @@ describe("script", () => {
     const context = {
       window: {
         root: true,
+        count: 2,
       },
     };
     await source.run(context);
 
     assert.ok(context.window.broker);
     assert.ok(context.window.setByModule);
-    assert.equal(context.window.count, 2);
+    assert.equal(context.window.count, 3);
     assert.ok(context.window.setByQueue);
   });
 
-  it("executes module function", async () => {
+  it("get module exports", async () => {
+    const source = Script("./resources/lib/module");
+
+    const context = {
+      window: {
+        root: true,
+      },
+      console,
+    };
+
+    const {justReturn} = await source.exports(context);
+
+    assert.equal(justReturn(1), 1);
+  });
+
+  it("execute module function", async () => {
     const source = Script("./resources/lib/module");
 
     const context = {

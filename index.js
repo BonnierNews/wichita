@@ -5,6 +5,8 @@ const vm = require("vm");
 const {name, version} = require("./package.json");
 const {dirname, extname, join, resolve: resolvePath, isAbsolute} = require("path");
 
+const ErrorPrepareStackTrace = Error.prepareStackTrace;
+
 module.exports = function Scripts(sourcePath, options) {
   if (!("SourceTextModule" in vm)) throw new Error("No SourceTextModule in vm, try using node --experimental-vm-modules flag");
 
@@ -17,14 +19,19 @@ module.exports = function Scripts(sourcePath, options) {
     run(globalContext) {
       return runScripts(globalContext, fullPath, options);
     },
-    execute(globalContext, testFn) {
+    exports(globalContext) {
+      return new Promise((resolve) => {
+        this.execute(globalContext, resolve);
+      });
+    },
+    execute(globalContext, fn) {
       return runScripts(globalContext, fullPath, {...options, initializeImportMeta}, `
-import * as Module from "${fullPath}";
-import.meta.export(Module)
+import * as _module from "${fullPath}";
+import.meta.export(_module)
       `);
 
       function initializeImportMeta(meta) {
-        meta.export = testFn;
+        meta.export = fn;
       }
     },
   };
@@ -60,7 +67,7 @@ function getModulePath(sourcePath) {
   }
 }
 
-async function runScripts(globalContext, mainPath, options = {}, testScript) {
+async function runScripts(globalContext, mainPath, options = {}, script) {
   const cache = {};
   const {initializeImportMeta} = options;
 
@@ -70,15 +77,14 @@ async function runScripts(globalContext, mainPath, options = {}, testScript) {
   });
 
   let mainModule;
-  if (testScript) {
-    mainModule = new vm.SourceTextModule(testScript, {
+  if (script) {
+    mainModule = new vm.SourceTextModule(script, {
       url: `file://${mainPath}`,
       context: vmContext,
       initializeImportMeta,
     });
 
     await mainModule.link(linker);
-
   } else {
     mainModule = await loadScript(mainPath, vmContext);
   }
@@ -94,9 +100,9 @@ async function runScripts(globalContext, mainPath, options = {}, testScript) {
   });
 
   async function loadScript(scriptPath, context) {
-    const scriptSource = await readScript(scriptPath);
+    const source = await readScript(scriptPath);
 
-    const module = new vm.SourceTextModule(scriptSource, {
+    const module = new vm.SourceTextModule(source, {
       url: `file://${scriptPath}`,
       context,
       initializeImportMeta
@@ -132,11 +138,10 @@ async function runScripts(globalContext, mainPath, options = {}, testScript) {
 }
 
 function getCallerFile() {
-  const oldPrepareStackTrace = Error.prepareStackTrace;
   Error.prepareStackTrace = function prepareStackTrace(_, stack) {
     return stack;
   };
   const stack = new Error().stack;
-  Error.prepareStackTrace = oldPrepareStackTrace;
+  Error.prepareStackTrace = ErrorPrepareStackTrace;
   return stack[2] ? stack[2].getFileName() : undefined;
 }

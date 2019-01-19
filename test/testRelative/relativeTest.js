@@ -4,7 +4,7 @@ const Script = require("../..");
 const assert = require("assert");
 
 describe("relative path", () => {
-  it("executes scripts with relative path", async () => {
+  it("executes scripts from relative path", async () => {
     const source = Script("../../resources/main");
 
     const context = {

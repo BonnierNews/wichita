@@ -13,10 +13,12 @@ describe("script", () => {
       calledFrom: __filename,
       run: source.run,
       execute: source.execute,
+      exports: source.exports,
     });
 
     assert.ok(typeof source.run === "function", "run function");
     assert.ok(typeof source.execute === "function", "execute function");
+    assert.ok(typeof source.exports === "function", "exports function");
   });
 
   it("executes scripts in passed context", async () => {

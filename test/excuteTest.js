@@ -4,7 +4,7 @@ const assert = require("assert");
 const Script = require("..");
 
 describe("execute module", () => {
-  it("returns module in function callback with arguments", async () => {
+  it("returns module exports in callback", async () => {
     const source = Script("../resources/lib/module");
 
     const context = {
