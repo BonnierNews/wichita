@@ -4,4 +4,5 @@ assets/js/vendor/**
 submodule/**
 logs/
 docs/
+tmp/
 /worker.js
