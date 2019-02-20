@@ -52,7 +52,12 @@ function getFullPath(sourcePath, calledFrom) {
 function getModulePath(sourcePath) {
   try {
     const parts = sourcePath.split("/");
-    const potentialModuleName = parts.shift();
+    let potentialModuleName = parts.shift();
+
+    if (potentialModuleName.indexOf("@") === 0) {
+      potentialModuleName += `/${parts.shift()}`;
+    }
+
     let theRest = parts.join("/");
 
     const requirePath = require.resolve(`${potentialModuleName}/package.json`);
@@ -60,7 +65,6 @@ function getModulePath(sourcePath) {
     const externalModule = resolvedPackage && (resolvedPackage.module || resolvedPackage["jsnext:main"]) || "index.js";
 
     if (theRest && !extname(theRest)) theRest += extname(externalModule);
-
     return resolvePath(dirname(requirePath), theRest || externalModule);
   } catch (e) {
     // do nothing
