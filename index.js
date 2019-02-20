@@ -73,7 +73,7 @@ function getModulePath(sourcePath) {
 
 async function runScripts(sandbox, mainPath, options = {}, script) {
   const cache = {};
-  const {initializeImportMeta} = options;
+  const {initializeImportMeta, moduleRoute} = options;
 
   const vmContext = vm.createContext(sandbox, {
     name: `${name} v${version}`,
@@ -119,6 +119,11 @@ async function runScripts(sandbox, mainPath, options = {}, script) {
 
   async function linker(specifier, referencingModule) {
     const parentFile = referencingModule.url.substring(7);
+
+    if (moduleRoute) {
+      specifier = specifier.replace(moduleRoute, "");
+    }
+
     const scriptPath = getFullPath(specifier, parentFile);
 
     if (cache[scriptPath]) {

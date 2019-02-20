@@ -18,6 +18,7 @@ NODE_OPTIONS="--experimental-vm-modules --no-warnings" mocha -R dot
 Wichita takes one required argument:
 - `sourcePath`: required script path, relative from calling file
 - `options`: optional vm context options, passed to `vm.createContext`
+  - `moduleRoute`: route that will be used when importing modules (optional)
 
 and returns an api:
 

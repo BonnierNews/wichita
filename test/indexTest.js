@@ -195,4 +195,18 @@ describe("script", () => {
     assert.ok(error);
     assert.ok(/myProp/.test(error.message));
   });
+
+  it("moduleRoute option helps to resolve static imports", async () => {
+    const source = Script("../resources/static-import.js", {moduleRoute: "/module/"});
+
+    const context = {
+      window: {
+        root: true,
+      },
+    };
+
+    await source.run(context);
+
+    assert.ok(context.window.broker);
+  });
 });
