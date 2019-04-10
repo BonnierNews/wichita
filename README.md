@@ -13,7 +13,7 @@ If running tests with mocha you can preceed the mocha call with `NODE_OPTIONS`, 
 NODE_OPTIONS="--experimental-vm-modules --no-warnings" mocha -R dot
 ```
 
-### Api
+# Api
 
 Wichita takes one required argument:
 - `sourcePath`: required script path, relative from calling file
@@ -146,3 +146,15 @@ describe("script", () => {
   });
 });
 ```
+
+# Imports
+
+JSON file import are imported as default:
+```js
+import data from  "./resources/assets/data.json";
+````
+
+is exported as:
+```js
+export default { content_of_data_json: true };
+````

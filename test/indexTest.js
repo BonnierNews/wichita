@@ -86,6 +86,18 @@ describe("script", () => {
     assert.ok(context.window.gotten);
   });
 
+  it("imported json files are exported as default", async () => {
+    const source = Script("../resources/assets/main.mjs");
+
+    const context = {
+      window: {},
+    };
+
+    await source.run(context);
+
+    assert.ok(context.window.data);
+  });
+
   it("throws if main file is not found", async () => {
     const source = Script("../resources/no-main");
 

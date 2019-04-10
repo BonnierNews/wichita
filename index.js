@@ -104,7 +104,10 @@ async function runScripts(sandbox, mainPath, options = {}, script) {
   });
 
   async function loadScript(scriptPath, context) {
-    const source = await readScript(scriptPath);
+    let source = await readScript(scriptPath);
+    if (extname(scriptPath) === ".json") {
+      source = `export default ${source};`;
+    }
 
     const module = new vm.SourceTextModule(source, {
       url: `file://${scriptPath}`,
