@@ -221,4 +221,17 @@ describe("script", () => {
 
     assert.ok(context.window.broker);
   });
+
+  it("should not run imported module scope more than once", async () => {
+    const source = Script("../resources/main");
+
+    const context = {
+      window: {
+        root: true,
+      },
+    };
+
+    await source.run(context);
+    assert.equal(context.window.timesImported, 1);
+  });
 });
