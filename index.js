@@ -129,13 +129,11 @@ async function runScripts(sandbox, mainPath, options = {}, script) {
 
     const scriptPath = getFullPath(specifier, parentFile);
 
-    if (cache[scriptPath]) {
-      return cache[scriptPath];
+    if (!cache[scriptPath]) {
+      cache[scriptPath] = loadScript(scriptPath, referencingModule.context);
     }
 
-    const module = await loadScript(scriptPath, referencingModule.context);
-    cache[scriptPath] = module;
-    return module;
+    return await cache[scriptPath];
   }
 
   function readScript(scriptPath) {
