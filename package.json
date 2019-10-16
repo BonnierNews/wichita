@@ -1,6 +1,6 @@
 {
   "name": "@bonniernews/wichita",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "Run your es6 modules with imports/exports in a vm sandbox",
   "main": "index.js",
   "license": "MIT",
@@ -40,7 +40,7 @@
   },
   "devDependencies": {
     "@bonniernews/md2html": "0.0.8",
-    "eslint": "^5.16.0",
+    "eslint": "^6.5.1",
     "mocha": "^6.1.4",
     "nyc": "^14.1.1",
     "smqp": "^1.6.0"

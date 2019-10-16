@@ -82,8 +82,10 @@ async function runScripts(sandbox, mainPath, options = {}, script) {
 
   let mainModule;
   if (script) {
+    const identifier = `file://${mainPath}`;
     mainModule = new vm.SourceTextModule(script, {
-      url: `file://${mainPath}`,
+      identifier,
+      url: identifier, // pre node v12.12
       context: vmContext,
       initializeImportMeta,
     });
@@ -93,7 +95,9 @@ async function runScripts(sandbox, mainPath, options = {}, script) {
     mainModule = await loadScript(mainPath, vmContext);
   }
 
-  await mainModule.instantiate();
+  if (mainModule.instantiate) {
+    await mainModule.instantiate(); // pre node v12.12
+  }
 
   return mainModule.evaluate().then((result) => {
     return {
@@ -109,8 +113,10 @@ async function runScripts(sandbox, mainPath, options = {}, script) {
       source = `export default ${source};`;
     }
 
+    const identifier = `file://${scriptPath}`;
     const module = new vm.SourceTextModule(source, {
-      url: `file://${scriptPath}`,
+      identifier,
+      url: identifier, // pre node v12.12
       context,
       initializeImportMeta
     });
@@ -121,7 +127,8 @@ async function runScripts(sandbox, mainPath, options = {}, script) {
   }
 
   async function linker(specifier, referencingModule) {
-    const parentFile = referencingModule.url.substring(7);
+    const {url, identifier} = referencingModule;
+    const parentFile = (url || identifier).substring(7);
 
     if (moduleRoute) {
       specifier = specifier.replace(moduleRoute, "");
