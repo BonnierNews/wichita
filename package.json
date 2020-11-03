@@ -40,10 +40,10 @@
   },
   "devDependencies": {
     "@bonniernews/md2html": "0.0.8",
-    "eslint": "^6.5.1",
-    "mocha": "^6.1.4",
-    "nyc": "^14.1.1",
-    "smqp": "^1.6.0"
+    "eslint": "^7.12.1",
+    "mocha": "^8.2.1",
+    "nyc": "^15.1.0",
+    "smqp": "^3.0.1"
   },
   "nyc": {
     "exclude": [
