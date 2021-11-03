@@ -25,5 +25,10 @@ jobs:
       - name: Install dependencies
         run: npm i
 
-      - name: Run Tests
-        run: npm test
+     - name: Run Tests
+       run: mocha
+       env:
+         NODE_OPTIONS: --experimental-vm-modules --no-warnings
+
+     - name: Run Lint
+       run: npm run posttest
