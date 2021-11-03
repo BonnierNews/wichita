@@ -85,7 +85,6 @@ async function runScripts(sandbox, mainPath, options = {}, script) {
     const identifier = `file://${mainPath}`;
     mainModule = new vm.SourceTextModule(script, {
       identifier,
-      url: identifier, // pre node v12.12
       context: vmContext,
       initializeImportMeta,
     });
@@ -93,10 +92,6 @@ async function runScripts(sandbox, mainPath, options = {}, script) {
     await mainModule.link(linker);
   } else {
     mainModule = await loadScript(mainPath, vmContext);
-  }
-
-  if (mainModule.instantiate) {
-    await mainModule.instantiate(); // pre node v12.12
   }
 
   return mainModule.evaluate().then((result) => {
@@ -116,7 +111,6 @@ async function runScripts(sandbox, mainPath, options = {}, script) {
     const identifier = `file://${scriptPath}`;
     const module = new vm.SourceTextModule(source, {
       identifier,
-      url: identifier, // pre node v12.12
       context,
       initializeImportMeta
     });

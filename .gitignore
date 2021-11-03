@@ -30,3 +30,6 @@ coverage
 .*.sw[a-z]
 
 tmp/
+
+package-lock.json
+.eslintcache

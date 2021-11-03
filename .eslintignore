@@ -6,3 +6,4 @@ logs/
 docs/
 tmp/
 /worker.js
+node_modules/

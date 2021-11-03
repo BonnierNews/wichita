@@ -4,5 +4,5 @@ export {queue};
 
 function queue() {
   window.setByQueue = true;
-  return Queue("test-q");
+  return new Queue("test-q");
 }

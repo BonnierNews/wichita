@@ -1,3 +1,3 @@
 import {Broker} from "/module/smqp";
 
-window.broker = Broker();
+window.broker = new Broker();

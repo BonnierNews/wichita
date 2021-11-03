@@ -6,7 +6,7 @@ import {render} from "@bonniernews/md2html";
 import importer1 from "./lib/importer1";
 import importer2 from "./lib/importer2";
 
-window.broker = Broker();
+window.broker = new Broker();
 
 module();
 importer1();

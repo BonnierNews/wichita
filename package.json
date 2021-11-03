@@ -1,6 +1,6 @@
 {
   "name": "@bonniernews/wichita",
-  "version": "0.7.0",
+  "version": "2.0.0",
   "description": "Run your es6 modules with imports/exports in a vm sandbox",
   "main": "index.js",
   "license": "MIT",
@@ -15,11 +15,6 @@
   "bugs": {
     "url": "https://github.com/BonnierNews/wichita/issues"
   },
-  "files": [
-    "index.js",
-    "LICENSE",
-    "README.md"
-  ],
   "keywords": [
     "SourceTextModule",
     "es6",
@@ -33,22 +28,25 @@
   "scripts": {
     "test": "NODE_OPTIONS=\"--experimental-vm-modules --no-warnings\" mocha",
     "test:cov": "NODE_OPTIONS=\"--experimental-vm-modules --no-warnings\" nyc mocha && eslint . && nyc report --reporter=lcov",
-    "posttest": "eslint ."
+    "posttest": "eslint . --cache"
   },
   "engines": {
-    "node": ">=10.15"
+    "node": ">=14"
   },
   "devDependencies": {
     "@bonniernews/md2html": "0.0.8",
-    "eslint": "^6.5.1",
-    "mocha": "^6.1.4",
-    "nyc": "^14.1.1",
-    "smqp": "^1.6.0"
+    "eslint": "^8.1.0",
+    "mocha": "^9.1.3",
+    "nyc": "^15.1.0",
+    "smqp": "^5.1.0"
   },
   "nyc": {
     "exclude": [
       "resources",
       "test"
     ]
-  }
+  },
+  "files": [
+    "index.js"
+  ]
 }
