@@ -10,6 +10,7 @@ jobs:
   build:
     timeout-minutes: 20
     strategy:
+      fail-fast: false
       matrix:
         os: [windows-latest, ubuntu-latest]
         node-version: [14.x, 16.x]
@@ -26,7 +27,7 @@ jobs:
         run: npm i --silent
 
       - name: Run Tests
-        run: mocha
+        run: npm run citest
         env:
           NODE_OPTIONS: --experimental-vm-modules --no-warnings
 

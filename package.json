@@ -28,6 +28,7 @@
   "scripts": {
     "test": "NODE_OPTIONS=\"--experimental-vm-modules --no-warnings\" mocha",
     "test:cov": "NODE_OPTIONS=\"--experimental-vm-modules --no-warnings\" nyc mocha && eslint . && nyc report --reporter=lcov",
+    "citest": "mocha",
     "posttest": "eslint . --cache"
   },
   "engines": {
