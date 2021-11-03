@@ -27,8 +27,7 @@
   ],
   "scripts": {
     "test": "NODE_OPTIONS=\"--experimental-vm-modules --no-warnings\" mocha",
-    "test:cov": "NODE_OPTIONS=\"--experimental-vm-modules --no-warnings\" nyc mocha && eslint . && nyc report --reporter=lcov",
-    "citest": "mocha",
+    "citest": "mocha test/executeTest.js",
     "posttest": "eslint . --cache"
   },
   "engines": {
@@ -38,7 +37,6 @@
     "@bonniernews/md2html": "0.0.8",
     "eslint": "^8.1.0",
     "mocha": "^9.1.3",
-    "nyc": "^15.1.0",
     "smqp": "^5.1.0"
   },
   "nyc": {

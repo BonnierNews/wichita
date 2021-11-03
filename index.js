@@ -38,31 +38,27 @@ import.meta.export(_module)
 };
 
 function getFullPath(sourcePath, calledFrom) {
-  const normalized = normalize(sourcePath);
+  if (isAbsolute(sourcePath)) return sourcePath;
 
-  console.log({normalized})
-
-  if (isAbsolute(normalized)) return normalized;
-
-  const isRelativePath = isRelative(normalized);
-  const resolvedPath = !isRelativePath && getModulePath(normalized);
+  const isRelativePath = isRelative(sourcePath);
+  const resolvedPath = !isRelativePath && getModulePath(sourcePath);
   if (resolvedPath) {
     return resolvedPath;
   }
 
   if (!extname(sourcePath)) sourcePath += extname(calledFrom);
-  return join(dirname(calledFrom), sourcePath);
+  return join(dirname(calledFrom), normalize(sourcePath));
 }
 
 function isRelative(p) {
   if (!p) return;
-  const p0 = p.split(sep).shift();
+  const p0 = p.split("/").shift();
   return p0 === "." || p0 === "..";
 }
 
 function getModulePath(sourcePath) {
   try {
-    const parts = sourcePath.split(sep);
+    const parts = sourcePath.split("/");
     let potentialModuleName = parts.shift();
 
     if (potentialModuleName.indexOf("@") === 0) {
