@@ -40,6 +40,8 @@ import.meta.export(_module)
 function getFullPath(sourcePath, calledFrom) {
   const normalized = normalize(sourcePath);
 
+  console.log({normalized})
+
   if (isAbsolute(normalized)) return normalized;
 
   const isRelativePath = isRelative(normalized);
