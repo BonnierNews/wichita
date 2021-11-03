@@ -47,7 +47,8 @@ function getFullPath(sourcePath, calledFrom) {
   }
 
   if (!extname(sourcePath)) sourcePath += extname(calledFrom);
-  return join(dirname(calledFrom), normalize(sourcePath));
+  const file = sourcePath.split("/").join(sep);
+  return join(dirname(calledFrom), file);
 }
 
 function isRelative(p) {
