@@ -3,7 +3,7 @@
 const fs = require("fs");
 const vm = require("vm");
 const {name, version} = require("./package.json");
-const {dirname, extname, join, resolve: resolvePath, isAbsolute} = require("path");
+const {normalize, dirname, extname, join, resolve: resolvePath, isAbsolute, sep} = require("path");
 
 const ErrorPrepareStackTrace = Error.prepareStackTrace;
 
@@ -38,9 +38,12 @@ import.meta.export(_module)
 };
 
 function getFullPath(sourcePath, calledFrom) {
-  if (isAbsolute(sourcePath)) return sourcePath;
-  const isRelativePath = /^\.{1,2}[/\\]?/.test(sourcePath);
-  const resolvedPath = !isRelativePath && getModulePath(sourcePath);
+  const normalized = normalize(sourcePath);
+
+  if (isAbsolute(normalized)) return normalized;
+
+  const isRelativePath = isRelative(normalized);
+  const resolvedPath = !isRelativePath && getModulePath(normalized);
   if (resolvedPath) {
     return resolvedPath;
   }
@@ -49,19 +52,25 @@ function getFullPath(sourcePath, calledFrom) {
   return join(dirname(calledFrom), sourcePath);
 }
 
+function isRelative(p) {
+  if (!p) return;
+  const p0 = p.split(sep).shift();
+  return p0 === "." || p0 === "..";
+}
+
 function getModulePath(sourcePath) {
   try {
-    const parts = sourcePath.split("/");
+    const parts = sourcePath.split(sep);
     let potentialModuleName = parts.shift();
 
     if (potentialModuleName.indexOf("@") === 0) {
-      potentialModuleName += `/${parts.shift()}`;
+      potentialModuleName += `${sep}${parts.shift()}`;
     }
 
-    let theRest = parts.join("/");
+    let theRest = parts.join(sep);
 
-    const requirePath = require.resolve(`${potentialModuleName}/package.json`);
-    const resolvedPackage = require(`${potentialModuleName}/package.json`);
+    const requirePath = require.resolve(`${potentialModuleName}${sep}package.json`);
+    const resolvedPackage = require(`${potentialModuleName}${sep}package.json`);
     const externalModule = resolvedPackage && (resolvedPackage.module || resolvedPackage["jsnext:main"]) || "index.js";
 
     if (theRest && !extname(theRest)) theRest += extname(externalModule);
