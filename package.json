@@ -27,7 +27,7 @@
   ],
   "scripts": {
     "test": "NODE_OPTIONS=\"--experimental-vm-modules --no-warnings\" mocha",
-    "citest": "mocha test/executeTest.js",
+    "citest": "mocha",
     "posttest": "eslint . --cache"
   },
   "engines": {
