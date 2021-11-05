@@ -1,22 +1,33 @@
 "use strict";
 
 const assert = require("assert");
-const {isAbsolute, extname, dirname, join, resolve: resolvePath, sep} = require("path").win32;
+const {isAbsolute, extname, dirname, resolve: resolvePath, sep} = require("path").win32;
 
 describe("win32", () => {
-  it("relative file returns full path with extension from caller", () => {
-
+  it("relative file can be resolved", () => {
     assert.equal(
       getFullPath("../resources/lib/module", "D:\\a\\wichita\\wichita\\test\\win32Test.js"),
       "D:\\a\\wichita\\wichita\\resources\\lib\\module.js"
     );
+    assert.equal(
+      getFullPath("../resources/lib/module.mjs", "D:\\a\\wichita\\wichita\\test\\win32Test.js"),
+      "D:\\a\\wichita\\wichita\\resources\\lib\\module.mjs"
+    );
 
     function getFullPath(sourcePath, calledFrom) {
-      if (isAbsolute(sourcePath)) return sourcePath;
-      let file = join(dirname(calledFrom), sourcePath);
+      let file = resolvePath(dirname(calledFrom), sourcePath.split("/").join(sep));
       if (!extname(file)) file += extname(calledFrom);
       return file;
     }
+  });
+
+  it("isAbsolute returns true", () => {
+    assert.equal(
+      isAbsolute("D:\\a\\wichita\\wichita\\resources\\lib\\module.js"),
+      true
+    );
+    assert.equal(isAbsolute("smqp"), false);
+    assert.equal(isAbsolute("@bonniernews/md2html"), false);
   });
 
   it("resolve node module", () => {

@@ -2,8 +2,10 @@
 
 const fs = require("fs");
 const vm = require("vm");
+const url = require("url");
+
 const {name, version} = require("./package.json");
-const {dirname, extname, join, resolve: resolvePath, isAbsolute, sep} = require("path");
+const {dirname, extname, resolve: resolvePath, isAbsolute, sep, posix} = require("path");
 
 const ErrorPrepareStackTrace = Error.prepareStackTrace;
 
@@ -25,8 +27,9 @@ module.exports = function Scripts(sourcePath, options) {
       });
     },
     execute(sandbox, fn) {
+      const source = posix.basename(sourcePath, posix.extname(sourcePath));
       return runScripts(sandbox, fullPath, {...options, initializeImportMeta}, `
-import * as _module from "${fullPath}";
+import * as _module from "./${source}";
 import.meta.export(_module)
       `);
 
@@ -46,7 +49,10 @@ function getFullPath(sourcePath, calledFrom) {
     return resolvedPath;
   }
 
-  let file = join(dirname(calledFrom), sourcePath);
+  let file = resolvePath(dirname(calledFrom), sourcePath.split("/").join(sep));
+
+  console.log({sourcePath, calledFrom, file, ext: extname(calledFrom)});
+
   if (!extname(file)) file += extname(calledFrom);
   return file;
 }
@@ -85,12 +91,10 @@ async function runScripts(sandbox, mainPath, options = {}, script) {
     name: `${name} v${version}`,
     ...options,
   });
-
   let mainModule;
   if (script) {
-    const identifier = `file://${mainPath}`;
     mainModule = new vm.SourceTextModule(script, {
-      identifier,
+      identifier: url.pathToFileURL(mainPath).toString(),
       context: vmContext,
       initializeImportMeta,
     });
@@ -114,9 +118,8 @@ async function runScripts(sandbox, mainPath, options = {}, script) {
       source = `export default ${source};`;
     }
 
-    const identifier = `file://${scriptPath}`;
     const module = new vm.SourceTextModule(source, {
-      identifier,
+      identifier: url.pathToFileURL(scriptPath).toString(),
       context,
       initializeImportMeta
     });
@@ -127,12 +130,14 @@ async function runScripts(sandbox, mainPath, options = {}, script) {
   }
 
   async function linker(specifier, referencingModule) {
-    const {url, identifier} = referencingModule;
-    const parentFile = (url || identifier).substring(7);
+    const {identifier} = referencingModule;
+    const parentFile = url.fileURLToPath(identifier);
 
     if (moduleRoute) {
       specifier = specifier.replace(moduleRoute, "");
     }
+
+    console.log({specifier, parentFile})
 
     const scriptPath = getFullPath(specifier, parentFile);
 
