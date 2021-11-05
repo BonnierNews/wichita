@@ -3,7 +3,7 @@
 const fs = require("fs");
 const vm = require("vm");
 const {name, version} = require("./package.json");
-const {normalize, dirname, extname, join, resolve: resolvePath, isAbsolute, sep} = require("path");
+const {dirname, extname, join, resolve: resolvePath, isAbsolute, sep} = require("path");
 
 const ErrorPrepareStackTrace = Error.prepareStackTrace;
 
@@ -46,13 +46,12 @@ function getFullPath(sourcePath, calledFrom) {
     return resolvedPath;
   }
 
-  if (!extname(sourcePath)) sourcePath += extname(calledFrom);
-  const file = sourcePath.split("/").join(sep);
-  return join(dirname(calledFrom), file);
+  let file = join(dirname(calledFrom), sourcePath);
+  if (!extname(file)) file += extname(calledFrom);
+  return file;
 }
 
 function isRelative(p) {
-  if (!p) return;
   const p0 = p.split("/").shift();
   return p0 === "." || p0 === "..";
 }
@@ -63,15 +62,14 @@ function getModulePath(sourcePath) {
     let potentialModuleName = parts.shift();
 
     if (potentialModuleName.indexOf("@") === 0) {
-      potentialModuleName += `${sep}${parts.shift()}`;
+      potentialModuleName += `/${parts.shift()}`;
     }
 
-    let theRest = parts.join(sep);
-
-    const requirePath = require.resolve(`${potentialModuleName}${sep}package.json`);
-    const resolvedPackage = require(`${potentialModuleName}${sep}package.json`);
+    const requirePath = require.resolve(`${potentialModuleName}/package.json`);
+    const resolvedPackage = require(`${potentialModuleName}/package.json`);
     const externalModule = resolvedPackage && (resolvedPackage.module || resolvedPackage["jsnext:main"]) || "index.js";
 
+    let theRest = parts.join(sep);
     if (theRest && !extname(theRest)) theRest += extname(externalModule);
     return resolvePath(dirname(requirePath), theRest || externalModule);
   } catch (e) {
