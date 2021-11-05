@@ -50,9 +50,6 @@ function getFullPath(sourcePath, calledFrom) {
   }
 
   let file = resolvePath(dirname(calledFrom), sourcePath.split("/").join(sep));
-
-  console.log({sourcePath, calledFrom, file, ext: extname(calledFrom)});
-
   if (!extname(file)) file += extname(calledFrom);
   return file;
 }
@@ -136,8 +133,6 @@ async function runScripts(sandbox, mainPath, options = {}, script) {
     if (moduleRoute) {
       specifier = specifier.replace(moduleRoute, "");
     }
-
-    console.log({specifier, parentFile})
 
     const scriptPath = getFullPath(specifier, parentFile);
 

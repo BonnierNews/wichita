@@ -20,6 +20,21 @@ describe("exports", () => {
     assert.ok(typeof module.justReturn === "function");
   });
 
+  it("exposes module functions with file extension", async () => {
+    const source = Script("../resources/lib/module.js");
+
+    const context = {
+      window: {
+        root: true,
+      },
+      console,
+    };
+
+    const module = await source.exports(context);
+    assert.ok(typeof module.default === "function");
+    assert.ok(typeof module.justReturn === "function");
+  });
+
   it("exposes json as default object", async () => {
     const source = Script("../resources/assets/data.json");
 
