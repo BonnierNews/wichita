@@ -1,6 +1,10 @@
 Changelog
 =========
 
+# 1.1.0
+
+- Add optional fileCache option to cache source module content between runs
+
 # 1.0.0
 
 ## Breaking

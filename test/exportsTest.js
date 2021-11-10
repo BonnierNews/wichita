@@ -6,7 +6,7 @@ const {join} = require("path");
 
 describe("exports", () => {
   it("exposes module functions", async () => {
-    const source = Script("../resources/lib/module");
+    const source = new Script("../resources/lib/module");
 
     const context = {
       window: {
@@ -21,7 +21,7 @@ describe("exports", () => {
   });
 
   it("exposes module functions with file extension", async () => {
-    const source = Script("../resources/lib/module.js");
+    const source = new Script("../resources/lib/module.js");
 
     const context = {
       window: {
@@ -36,7 +36,7 @@ describe("exports", () => {
   });
 
   it("exposes json as default object", async () => {
-    const source = Script("../resources/assets/data.json");
+    const source = new Script("../resources/assets/data.json");
 
     const context = {};
 
@@ -50,7 +50,7 @@ describe("exports", () => {
   });
 
   it("that are executable", async () => {
-    const source = Script("../resources/lib/module");
+    const source = new Script("../resources/lib/module");
 
     const context = {
       window: {
@@ -65,7 +65,7 @@ describe("exports", () => {
   });
 
   it("throws if trying to get exports of a folder", async () => {
-    const source = Script("../resources");
+    const source = new Script("../resources");
 
     const context = {
       window: {
@@ -84,7 +84,7 @@ describe("exports", () => {
   });
 
   it("rejects if trying to get exports of a folder", async () => {
-    const source = Script("../resources");
+    const source = new Script("../resources");
 
     const context = {
       window: {

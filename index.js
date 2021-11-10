@@ -1,43 +1,125 @@
 "use strict";
 
-const fs = require("fs");
 const vm = require("vm");
 const url = require("url");
+const {promises: fs} = require("fs");
 
 const {name, version} = require("./package.json");
+const wichita = `${name} v${version}`;
 const {dirname, extname, resolve: resolvePath, isAbsolute, sep, posix} = require("path");
 
 const ErrorPrepareStackTrace = Error.prepareStackTrace;
 
-module.exports = function Scripts(sourcePath, options) {
+module.exports = Script;
+
+function Script(sourcePath, options = {}, calledFrom) {
   if (!("SourceTextModule" in vm)) throw new Error("No SourceTextModule in vm, try using node --experimental-vm-modules flag");
+  if (!(this instanceof Script)) return new Script(sourcePath, options, getCalledFrom());
+  this.sourcePath = sourcePath;
+  this.calledFrom = calledFrom || getCalledFrom();
+  this.path = getFullPath(sourcePath, this.calledFrom);
+  this.options = options;
+}
 
-  const calledFrom = getCallerFile();
-  const fullPath = getFullPath(sourcePath, calledFrom);
+Script.prototype.run = async function run(sandbox) {
+  const {moduleRoute, fileCache, ...contextOptions} = this.options;
+  const vmContext = vm.createContext(sandbox, {
+    name: wichita,
+    ...contextOptions,
+  });
 
+  const loader = new Loader(moduleRoute, fileCache);
+  const module = await loader.loadScript(this.path, vmContext);
+  const result = await module.evaluate();
   return {
-    path: fullPath,
-    calledFrom,
-    run(sandbox) {
-      return runScripts(sandbox, fullPath, options);
-    },
-    exports(sandbox) {
-      return new Promise((resolve, reject) => {
-        this.execute(sandbox, resolve).catch(reject);
-      });
-    },
-    execute(sandbox, fn) {
-      const source = posix.basename(sourcePath, posix.extname(sourcePath));
-      return runScripts(sandbox, fullPath, {...options, initializeImportMeta}, `
-import * as _module from "./${source}";
-import.meta.export(_module)
-      `);
-
-      function initializeImportMeta(meta) {
-        meta.export = fn;
-      }
-    },
+    ...result,
+    module,
+    context: vmContext,
   };
+};
+
+Script.prototype.execute = async function execute(sandbox, fn) {
+  const sourceName = posix.basename(this.sourcePath, posix.extname(this.sourcePath));
+  const source = `import * as _module from "./${sourceName}";
+  import.meta.export(_module)`;
+
+  const {moduleRoute, fileCache, ...contextOptions} = this.options;
+  const vmContext = vm.createContext(sandbox, {
+    name: wichita,
+    ...contextOptions,
+  });
+
+  const loader = new Loader(moduleRoute, fileCache);
+  const module = await loader.loadModule(this.path, source, vmContext, initializeImportMeta);
+  const result = module.evaluate();
+  return {
+    ...result,
+    module,
+    context: vmContext,
+  };
+
+  function initializeImportMeta(meta) {
+    meta.export = fn;
+  }
+};
+
+Script.prototype.exports = function exports(sandbox) {
+  return new Promise((resolve, reject) => {
+    this.execute(sandbox, resolve).catch(reject);
+  });
+};
+
+function Loader(moduleRoute, fileCache) {
+  this.moduleRoute = moduleRoute;
+  this.fileCache = fileCache;
+  this.cache = new Map();
+  this.link = this.link.bind(this);
+}
+
+Loader.prototype.link = async function link(specifier, reference) {
+  if (this.moduleRoute) {
+    specifier = specifier.replace(this.moduleRoute, "");
+  }
+
+  const modulePath = getFullPath(specifier, url.fileURLToPath(reference.identifier));
+
+  let pending = this.cache.get(modulePath);
+  if (pending) return pending;
+
+  pending = this.loadScript(modulePath, reference.context);
+
+  this.cache.set(modulePath, pending);
+
+  return pending;
+};
+
+Loader.prototype.loadScript = async function loadScript(scriptPath, context) {
+  const source = await this.getScriptSource(scriptPath);
+  return this.loadModule(scriptPath, source, context);
+};
+
+Loader.prototype.loadModule = async function loadModule(scriptPath, source, context, initializeImportMeta) {
+  const module = new vm.SourceTextModule(source, {
+    identifier: url.pathToFileURL(scriptPath).toString(),
+    context,
+    initializeImportMeta
+  });
+  await module.link(this.link);
+  return module;
+};
+
+Loader.prototype.getScriptSource = async function getScriptSource(scriptPath) {
+  const fileCache = this.fileCache;
+  let content = fileCache?.get(scriptPath);
+  if (content) return content;
+
+  content = (await fs.readFile(scriptPath)).toString();
+  if (extname(scriptPath) === ".json") {
+    content = `export default ${content};`;
+  }
+
+  fileCache?.set(scriptPath, content);
+  return content;
 };
 
 function getFullPath(sourcePath, calledFrom) {
@@ -80,84 +162,11 @@ function getModulePath(sourcePath) {
   }
 }
 
-async function runScripts(sandbox, mainPath, options = {}, script) {
-  const cache = {};
-  const {initializeImportMeta, moduleRoute} = options;
-
-  const vmContext = vm.createContext(sandbox, {
-    name: `${name} v${version}`,
-    ...options,
-  });
-  let mainModule;
-  if (script) {
-    mainModule = new vm.SourceTextModule(script, {
-      identifier: url.pathToFileURL(mainPath).toString(),
-      context: vmContext,
-      initializeImportMeta,
-    });
-
-    await mainModule.link(linker);
-  } else {
-    mainModule = await loadScript(mainPath, vmContext);
-  }
-
-  return mainModule.evaluate().then((result) => {
-    return {
-      ...result,
-      module: mainModule,
-      context: vmContext,
-    };
-  });
-
-  async function loadScript(scriptPath, context) {
-    let source = await readScript(scriptPath);
-    if (extname(scriptPath) === ".json") {
-      source = `export default ${source};`;
-    }
-
-    const module = new vm.SourceTextModule(source, {
-      identifier: url.pathToFileURL(scriptPath).toString(),
-      context,
-      initializeImportMeta
-    });
-
-    await module.link(linker);
-
-    return module;
-  }
-
-  async function linker(specifier, referencingModule) {
-    const {identifier} = referencingModule;
-    const parentFile = url.fileURLToPath(identifier);
-
-    if (moduleRoute) {
-      specifier = specifier.replace(moduleRoute, "");
-    }
-
-    const scriptPath = getFullPath(specifier, parentFile);
-
-    if (!cache[scriptPath]) {
-      cache[scriptPath] = loadScript(scriptPath, referencingModule.context);
-    }
-
-    return await cache[scriptPath];
-  }
-
-  function readScript(scriptPath) {
-    return new Promise((resolve, reject) => {
-      fs.readFile(scriptPath, (err, buf) => {
-        if (err) return reject(err);
-        resolve(buf.toString());
-      });
-    });
-  }
-}
-
-function getCallerFile() {
+function getCalledFrom() {
   Error.prepareStackTrace = function prepareStackTrace(_, stack) {
     return stack;
   };
   const stack = new Error().stack;
   Error.prepareStackTrace = ErrorPrepareStackTrace;
-  return stack[2] ? stack[2].getFileName() : undefined;
+  return stack[2]?.getFileName();
 }

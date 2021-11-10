@@ -5,7 +5,7 @@ const assert = require("assert");
 
 describe("relative path", () => {
   it("executes scripts from relative path", async () => {
-    const source = Script("../../resources/main");
+    const source = new Script("../../resources/main");
 
     const context = {
       window: {

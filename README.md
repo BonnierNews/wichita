@@ -8,7 +8,15 @@ Run your es6 modules in a sandbox with the experimental `vm.SourceTextModule`.
 The following node options are required to run this module
 > --experimental-vm-modules --no-warnings
 
-If running tests with mocha you can preceed the mocha call with `NODE_OPTIONS`, e.g.:
+If running tests with mocha you have a couple of alternatives:
+
+```js
+// .mocharc.js
+module.exports = {
+  "node-options": ["experimental-vm-modules", "no-warnings"],
+}
+```
+
 ```bash
 NODE_OPTIONS="--experimental-vm-modules --no-warnings" mocha -R dot
 ```
@@ -19,6 +27,7 @@ Wichita takes one required argument:
 - `sourcePath`: required script path, relative from calling file
 - `options`: optional vm context options, passed to `vm.createContext`
   - `moduleRoute`: route that will be used when importing modules (optional)
+  - `fileCache`: optional Map, file content cache
 
 and returns an api:
 
@@ -34,7 +43,7 @@ and returns an api:
 
 Run script:
 ```js
-const source = Script("./resources/main");
+const source = new Script("./resources/main");
 await source.run({
   setTimeout() {},
   console,
@@ -44,7 +53,7 @@ await source.run({
 
 Exports:
 ```js
-const source = Script("./resources/lib/module");
+const source = new Script("./resources/lib/module");
 const {default: defaultExport, justReturn} = await source.exports({
   setTimeout() {},
   console,
@@ -57,7 +66,7 @@ justReturn(2);
 
 Execute:
 ```js
-const source = Script("./resources/lib/module");
+const source = new Script("./resources/lib/module");
 await source.execute({
   setTimeout() {},
   console,
@@ -78,7 +87,7 @@ const assert = require("assert");
 
 describe("script", () => {
   it("executes scripts in passed context", async () => {
-    const source = Script("./resources/main");
+    const source = new Script("./resources/main");
 
     const context = {
       window: {
@@ -94,7 +103,7 @@ describe("script", () => {
   });
 
   it("and again", async () => {
-    const source = Script("./resources/main");
+    const source = new Script("./resources/main");
 
     const context = {
       window: {
@@ -111,7 +120,7 @@ describe("script", () => {
   });
 
   it("get module exports", async () => {
-    const source = Script("./resources/lib/module");
+    const source = new Script("./resources/lib/module");
 
     const context = {
       window: {
@@ -126,7 +135,7 @@ describe("script", () => {
   });
 
   it("execute module function", async () => {
-    const source = Script("./resources/lib/module");
+    const source = new Script("./resources/lib/module");
 
     const context = {
       window: {

@@ -7,14 +7,13 @@ const {join} = require("path");
 
 describe("script", () => {
   it("returns api with run function and some props", async () => {
-    const source = Script("../resources/main");
+    const source = new Script("../resources/main");
 
-    assert.deepStrictEqual(source, {
+    assert.deepEqual(source, {
       path: join(__dirname, "../resources/main.js"),
+      sourcePath: "../resources/main",
       calledFrom: __filename,
-      run: source.run,
-      execute: source.execute,
-      exports: source.exports,
+      options: {},
     });
 
     assert.ok(typeof source.run === "function", "run function");
@@ -22,8 +21,23 @@ describe("script", () => {
     assert.ok(typeof source.exports === "function", "exports function");
   });
 
+  it("returns api if called without new", async () => {
+    const script = Script("../resources/main");
+
+    assert.deepEqual(script, {
+      path: join(__dirname, "../resources/main.js"),
+      sourcePath: "../resources/main",
+      calledFrom: __filename,
+      options: {},
+    });
+
+    assert.ok(typeof script.run === "function", "run function");
+    assert.ok(typeof script.execute === "function", "execute function");
+    assert.ok(typeof script.exports === "function", "exports function");
+  });
+
   it("executes scripts in passed context", async () => {
-    const source = Script("../resources/main");
+    const source = new Script("../resources/main");
 
     const context = {
       window: {
@@ -41,7 +55,7 @@ describe("script", () => {
   });
 
   it("and again", async () => {
-    const source = Script("../resources/main");
+    const source = new Script("../resources/main");
 
     const context = {
       window: {
@@ -59,8 +73,57 @@ describe("script", () => {
     assert.ok(context.window.setByQueue);
   });
 
+  it("executes scripts with same context twice", async () => {
+    const source = new Script("../resources/main");
+
+    const context = {
+      window: {
+        root: true,
+      },
+    };
+
+    await source.run(context);
+    await source.run(context);
+  });
+
+  it("executes same scripts with different context", async () => {
+    const source = new Script("../resources/main");
+
+    await source.run({
+      window: {
+        root: true,
+      },
+    });
+    await source.run({
+      window: {
+        root: true,
+      },
+    });
+  });
+
+  it("options.fileCache caches source file contents", async () => {
+    const cache = new Map();
+    const source = new Script("../resources/main", {
+      name: "Tallahassee",
+      origin: "https://www.expressen.se",
+      fileCache: cache,
+    });
+
+    const context = {
+      window: {},
+      console,
+    };
+
+    await source.run(context);
+    const firstSize = cache.size;
+    assert.ok(firstSize > 2);
+
+    await source.run(context);
+    assert.equal(firstSize, cache.size);
+  });
+
   it("options are passed to vm.createContext", async () => {
-    const source = Script("../resources/main", {
+    const source = new Script("../resources/main", {
       name: "Tallahassee",
       origin: "https://www.expressen.se"
     });
@@ -75,7 +138,7 @@ describe("script", () => {
   });
 
   it("picks up extension from main file when importing linked file", async () => {
-    const source = Script("../resources/assets/main.mjs");
+    const source = new Script("../resources/assets/main.mjs");
 
     const context = {
       window: {},
@@ -87,7 +150,7 @@ describe("script", () => {
   });
 
   it("imported json files are exported as default", async () => {
-    const source = Script("../resources/assets/main.mjs");
+    const source = new Script("../resources/assets/main.mjs");
 
     const context = {
       window: {},
@@ -99,7 +162,7 @@ describe("script", () => {
   });
 
   it("throws if main file is not found", async () => {
-    const source = Script("../resources/no-main");
+    const source = new Script("../resources/no-main");
 
     const context = {
       window: {
@@ -119,7 +182,7 @@ describe("script", () => {
   });
 
   it("throws if trying to run a folder", async () => {
-    const source = Script("../resources");
+    const source = new Script("../resources");
 
     const context = {
       window: {
@@ -138,7 +201,7 @@ describe("script", () => {
   });
 
   it("throws if import file is not found", async () => {
-    const source = Script("../resources/broken-import");
+    const source = new Script("../resources/broken-import");
 
     const context = {
       window: {
@@ -160,7 +223,7 @@ describe("script", () => {
   });
 
   it("rejects if main file is not found", () => {
-    const source = Script("../resources/no-main");
+    const source = new Script("../resources/no-main");
 
     const context = {
       window: {
@@ -176,7 +239,7 @@ describe("script", () => {
   });
 
   it("rejects if import file is not found", () => {
-    const source = Script("../resources/broken-import");
+    const source = new Script("../resources/broken-import");
 
     const context = {
       window: {
@@ -192,7 +255,7 @@ describe("script", () => {
   });
 
   it("throws if script error", async () => {
-    const source = Script("../resources/script-error.js");
+    const source = new Script("../resources/script-error.js");
 
     const context = {
       window: {}
@@ -209,7 +272,7 @@ describe("script", () => {
   });
 
   it("moduleRoute option helps to resolve static imports", async () => {
-    const source = Script("../resources/static-import.js", {moduleRoute: "/module/"});
+    const source = new Script("../resources/static-import.js", {moduleRoute: "/module/"});
 
     const context = {
       window: {
@@ -223,7 +286,7 @@ describe("script", () => {
   });
 
   it("should not run imported module scope more than once", async () => {
-    const source = Script("../resources/main");
+    const source = new Script("../resources/main");
 
     const context = {
       window: {
