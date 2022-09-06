@@ -1,8 +1,6 @@
 {
-  "env": {
-    "mocha": true
-  },
+  "extends": ["eslint-config-exp/test"],
   "rules": {
-    "no-unused-expressions": 0
+    "new-cap": 0
   }
 }

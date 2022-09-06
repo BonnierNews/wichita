@@ -76,7 +76,7 @@ function Loader(moduleRoute, fileCache) {
   this.link = this.link.bind(this);
 }
 
-Loader.prototype.link = async function link(specifier, reference) {
+Loader.prototype.link = function link(specifier, reference) {
   if (this.moduleRoute) {
     specifier = specifier.replace(this.moduleRoute, "");
   }
@@ -102,7 +102,7 @@ Loader.prototype.loadModule = async function loadModule(scriptPath, source, cont
   const module = new vm.SourceTextModule(source, {
     identifier: url.pathToFileURL(scriptPath).toString(),
     context,
-    initializeImportMeta
+    initializeImportMeta,
   });
   await module.link(this.link);
   return module;

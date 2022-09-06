@@ -6,7 +6,7 @@ const vm = require("vm");
 const {join} = require("path");
 
 describe("script", () => {
-  it("returns api with run function and some props", async () => {
+  it("returns api with run function and some props", () => {
     const source = new Script("../resources/main");
 
     assert.deepEqual(source, {
@@ -21,7 +21,7 @@ describe("script", () => {
     assert.ok(typeof source.exports === "function", "exports function");
   });
 
-  it("returns api if called without new", async () => {
+  it("returns api if called without new", () => {
     const script = Script("../resources/main");
 
     assert.deepEqual(script, {
@@ -125,7 +125,7 @@ describe("script", () => {
   it("options are passed to vm.createContext", async () => {
     const source = new Script("../resources/main", {
       name: "Tallahassee",
-      origin: "https://www.expressen.se"
+      origin: "https://www.expressen.se",
     });
 
     const context = {
@@ -174,7 +174,7 @@ describe("script", () => {
     try {
       await source.run(context);
     } catch (e) {
-      var error = e; //eslint-disable-line no-var
+      var error = e; // eslint-disable-line no-var
     }
 
     assert.ok(error);
@@ -193,7 +193,7 @@ describe("script", () => {
     try {
       await source.run(context);
     } catch (e) {
-      var error = e; //eslint-disable-line no-var
+      var error = e; // eslint-disable-line no-var
     }
 
     assert.ok(error);
@@ -213,7 +213,7 @@ describe("script", () => {
     try {
       await source.run(context);
     } catch (e) {
-      var error = e; //eslint-disable-line no-var
+      var error = e; // eslint-disable-line no-var
     }
 
     assert.ok(error);
@@ -234,7 +234,7 @@ describe("script", () => {
 
     return assert.rejects(() => source.run(context), {
       code: "ENOENT",
-      path: join(__dirname, "../resources/no-main.js")
+      path: join(__dirname, "../resources/no-main.js"),
     });
   });
 
@@ -250,7 +250,7 @@ describe("script", () => {
 
     return assert.rejects(() => source.run(context), {
       code: "ENOENT",
-      path: join(__dirname, "../resources/lib/no-module.js")
+      path: join(__dirname, "../resources/lib/no-module.js"),
     });
   });
 
@@ -258,13 +258,13 @@ describe("script", () => {
     const source = new Script("../resources/script-error.js");
 
     const context = {
-      window: {}
+      window: {},
     };
 
     try {
       await source.run(context);
     } catch (e) {
-      var error = e; //eslint-disable-line no-var
+      var error = e; // eslint-disable-line no-var
     }
 
     assert.ok(error);

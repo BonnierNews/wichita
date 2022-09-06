@@ -44,8 +44,8 @@ describe("exports", () => {
     assert.ok(typeof module.default === "object");
     assert.deepEqual(module.default, {
       data: {
-        list: ["item 1"]
-      }
+        list: ["item 1"],
+      },
     });
   });
 
@@ -76,14 +76,14 @@ describe("exports", () => {
     try {
       await source.exports(context);
     } catch (e) {
-      var error = e; //eslint-disable-line no-var
+      var error = e; // eslint-disable-line no-var
     }
 
     assert.ok(error);
     assert.equal(error.code, "ENOENT");
   });
 
-  it("rejects if trying to get exports of a folder", async () => {
+  it("rejects if trying to get exports of a folder", () => {
     const source = new Script("../resources");
 
     const context = {
@@ -94,7 +94,7 @@ describe("exports", () => {
 
     return assert.rejects(() => source.exports(context), {
       code: "ENOENT",
-      path: join(__dirname, "../resources.js")
+      path: join(__dirname, "../resources.js"),
     });
   });
 });
