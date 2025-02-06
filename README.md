@@ -167,3 +167,22 @@ is exported as:
 ```js
 export default { content_of_data_json: true };
 ````
+
+# Tip for Tallahaassee users
+
+To ensure that that console logs from clientside scripts are visibile when running a test with Tallaahaassee+Witchita you should add `browser.window.console = console;` to your `runScript` function
+
+For example:
+```
+function runScript(name, browser) {
+  const file = glob
+    .sync("./public/scripts/*")
+    .find((f) => !f.includes(".map") && f.includes(name));
+
+  const __dirname = path.resolve();
+  const fileResolved = path.resolve(__dirname, file);
+  const script = new Script(fileResolved);
+  browser.window.console = console; // This is key!
+  return script.run(browser.window);
+}
+```
