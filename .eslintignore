@@ -7,3 +7,4 @@ docs/
 tmp/
 /worker.js
 node_modules/
+test/resources/

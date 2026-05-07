@@ -168,6 +168,14 @@ is exported as:
 export default { content_of_data_json: true };
 ````
 
+## Bare specifiers
+
+Bare specifiers (`smqp`, `@scope/pkg`, `@scope/pkg/sub`) are resolved against the importing file's `node_modules`. Wichita honors the package's `package.json` `exports` map when present — including nested condition objects (`import`, `default`, `node`), array fallbacks, and `null` targets that explicitly mark a subpath as not exported. Conditions are matched in declaration order with `["node", "import"]` plus an implicit `default` fallback.
+
+For packages without an `exports` field, Wichita keeps using the legacy `module` / `jsnext:main` / `index.js` lookup, so existing tests against pre-`exports` packages keep working.
+
+If a bare specifier cannot be resolved, Wichita throws an `ERR_MODULE_NOT_FOUND` error naming the specifier and the importing file, rather than falling through to a relative-path lookup.
+
 # Tip for Tallahaassee users
 
 To ensure that that console logs from clientside scripts are visibile when running a test with Tallaahaassee+Witchita you should add `browser.window.console = console;` to your `runScript` function

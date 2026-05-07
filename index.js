@@ -2,13 +2,15 @@
 
 const vm = require("vm");
 const url = require("url");
-const {promises: fs} = require("fs");
+const Module = require("module");
+const {promises: fs, existsSync, readFileSync} = require("fs");
 
 const {name, version} = require("./package.json");
 const wichita = `${name} v${version}`;
 const {dirname, extname, resolve: resolvePath, isAbsolute, sep, posix} = require("path");
 
 const ErrorPrepareStackTrace = Error.prepareStackTrace;
+const RESOLUTION_CONDITIONS = ["node", "import"];
 
 module.exports = Script;
 
@@ -125,10 +127,8 @@ Loader.prototype.getScriptSource = async function getScriptSource(scriptPath) {
 function getFullPath(sourcePath, calledFrom) {
   if (isAbsolute(sourcePath)) return sourcePath;
 
-  const isRelativePath = isRelative(sourcePath);
-  const resolvedPath = !isRelativePath && getModulePath(sourcePath);
-  if (resolvedPath) {
-    return resolvedPath;
+  if (!isRelative(sourcePath)) {
+    return getModulePath(sourcePath, calledFrom);
   }
 
   let file = resolvePath(dirname(calledFrom), sourcePath.split("/").join(sep));
@@ -141,25 +141,140 @@ function isRelative(p) {
   return p0 === "." || p0 === "..";
 }
 
-function getModulePath(sourcePath) {
-  try {
-    const parts = sourcePath.split("/");
-    let potentialModuleName = parts.shift();
-
-    if (potentialModuleName.indexOf("@") === 0) {
-      potentialModuleName += `/${parts.shift()}`;
-    }
-
-    const requirePath = require.resolve(`${potentialModuleName}/package.json`);
-    const resolvedPackage = require(`${potentialModuleName}/package.json`);
-    const externalModule = resolvedPackage && (resolvedPackage.module || resolvedPackage["jsnext:main"]) || "index.js";
-
-    let theRest = parts.join(sep);
-    if (theRest && !extname(theRest)) theRest += extname(externalModule);
-    return resolvePath(dirname(requirePath), theRest || externalModule);
-  } catch (e) {
-    // do nothing
+function getModulePath(sourcePath, calledFrom) {
+  const parts = sourcePath.split("/");
+  let pkgName = parts.shift();
+  if (pkgName.startsWith("@")) {
+    pkgName += `/${parts.shift()}`;
   }
+  const subpath = parts.length ? `./${parts.join("/")}` : ".";
+
+  const req = Module.createRequire(calledFrom);
+  const pkgRoot = findPackageRoot(req, pkgName);
+  if (!pkgRoot) {
+    throw resolveError(sourcePath, calledFrom, `package "${pkgName}" not found in node_modules`);
+  }
+
+  const pkg = JSON.parse(readFileSync(resolvePath(pkgRoot, "package.json"), "utf8"));
+
+  if (pkg.exports !== null && pkg.exports !== undefined) {
+    const target = resolveExports(pkg.exports, subpath, RESOLUTION_CONDITIONS);
+    if (target === null) {
+      throw resolveError(sourcePath, calledFrom, `subpath "${subpath}" of package "${pkgName}" is not exported (matched a null target in the exports field)`);
+    }
+    if (target === undefined) {
+      throw resolveError(sourcePath, calledFrom, `no matching export for "${subpath}" in package "${pkgName}"`);
+    }
+    return resolvePath(pkgRoot, target);
+  }
+
+  // Legacy path: prefer ESM-friendly entry, never fall back to CJS-only "main".
+  const main = pkg.module || pkg["jsnext:main"] || "index.js";
+  if (subpath === ".") {
+    return resolvePath(pkgRoot, main);
+  }
+  let theRest = parts.join(sep);
+  if (theRest && !extname(theRest)) theRest += extname(main);
+  return resolvePath(pkgRoot, theRest);
+}
+
+function findPackageRoot(req, pkgName) {
+  try {
+    return dirname(req.resolve(`${pkgName}/package.json`));
+  } catch (e) {
+    if (e.code === "MODULE_NOT_FOUND") return undefined;
+    if (e.code !== "ERR_PACKAGE_PATH_NOT_EXPORTED") throw e;
+  }
+  // Package's exports map blocks ./package.json — walk node_modules paths manually.
+  const paths = (req.resolve.paths(pkgName) || []);
+  for (const p of paths) {
+    const candidate = resolvePath(p, ...pkgName.split("/"));
+    if (existsSync(resolvePath(candidate, "package.json"))) {
+      return candidate;
+    }
+  }
+  return undefined;
+}
+
+function resolveExports(exportsField, subpath, conditions) {
+  if (typeof exportsField === "string" || Array.isArray(exportsField)) {
+    if (subpath !== ".") return undefined;
+    return resolveTarget(exportsField, "", conditions);
+  }
+  if (exportsField === null || typeof exportsField !== "object") return undefined;
+
+  const keys = Object.keys(exportsField);
+  const hasSubpath = keys.some((k) => k.startsWith("."));
+  const hasCondition = keys.some((k) => !k.startsWith("."));
+  if (hasSubpath && hasCondition) {
+    throw new Error("Invalid \"exports\" field: keys must not mix subpaths and conditions");
+  }
+
+  if (hasSubpath) {
+    if (Object.prototype.hasOwnProperty.call(exportsField, subpath)) {
+      return resolveTarget(exportsField[subpath], "", conditions);
+    }
+    let bestKey;
+    let bestStar = "";
+    let bestPrefixLen = -1;
+    for (const k of keys) {
+      const star = k.indexOf("*");
+      if (star === -1) continue;
+      const prefix = k.slice(0, star);
+      const suffix = k.slice(star + 1);
+      if (subpath.length < prefix.length + suffix.length) continue;
+      if (!subpath.startsWith(prefix)) continue;
+      if (!subpath.endsWith(suffix)) continue;
+      if (prefix.length > bestPrefixLen) {
+        bestKey = k;
+        bestPrefixLen = prefix.length;
+        bestStar = subpath.slice(prefix.length, subpath.length - suffix.length);
+      }
+    }
+    if (bestKey !== undefined) {
+      return resolveTarget(exportsField[bestKey], bestStar, conditions);
+    }
+    return undefined;
+  }
+
+  if (subpath !== ".") return undefined;
+  return resolveTarget(exportsField, "", conditions);
+}
+
+function resolveTarget(target, star, conditions) {
+  if (target === null) return null;
+  if (typeof target === "string") {
+    if (!target.startsWith("./")) return undefined;
+    return target.split("*").join(star);
+  }
+  if (Array.isArray(target)) {
+    let nullSeen = false;
+    for (const item of target) {
+      const r = resolveTarget(item, star, conditions);
+      if (r === null) {
+        nullSeen = true;
+        continue;
+      }
+      if (r !== undefined) return r;
+    }
+    return nullSeen ? null : undefined;
+  }
+  if (typeof target === "object") {
+    for (const key of Object.keys(target)) {
+      if (key === "default" || conditions.includes(key)) {
+        const r = resolveTarget(target[key], star, conditions);
+        if (r !== undefined) return r;
+      }
+    }
+    return undefined;
+  }
+  return undefined;
+}
+
+function resolveError(specifier, calledFrom, reason) {
+  const err = new Error(`Cannot resolve module "${specifier}" imported from "${calledFrom}": ${reason}`);
+  err.code = "ERR_MODULE_NOT_FOUND";
+  return err;
 }
 
 function getCalledFrom() {

@@ -1,0 +1,8 @@
+{
+  "name": "@fixture/exports-only",
+  "version": "1.0.0",
+  "type": "module",
+  "exports": {
+    "./foo": { "import": "./dist/foo.js", "default": "./dist/foo.js" }
+  }
+}
