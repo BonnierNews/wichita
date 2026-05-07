@@ -35,6 +35,8 @@
   },
   "devDependencies": {
     "@bonniernews/md2html": "0.0.8",
+    "@fixture/conditions": "file:test/resources/@fixture/conditions",
+    "@fixture/exports-only": "file:test/resources/@fixture/exports-only",
     "eslint": "^8.23.0",
     "eslint-config-exp": "^0.4.0",
     "mocha": "^10.0.0",
